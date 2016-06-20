@@ -25,10 +25,17 @@ void root(const uchar4 *in, uchar4 *out, uint32_t x, uint32_t y) {
 	   k++;
 	}
 
-    int COLOR_MULT = (255 / precision) * k;
-    pixel.z = 255;
-    pixel.y = 255-COLOR_MULT;
-    pixel.x = 255-COLOR_MULT;
+    int colorV = (255 / precision) * k + 50;
+    int overflow = 0;
+    if(colorV > 255)
+    {
+     overflow = colorV * 0.6;
+     colorV = 255;
+    }
+
+    pixel.z = overflow;
+    pixel.y = colorV;
+    pixel.x = colorV;
     out->xyz = convert_uchar3(pixel);
 
 }

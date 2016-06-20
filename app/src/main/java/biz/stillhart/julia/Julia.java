@@ -24,6 +24,10 @@ public class Julia extends Activity {
     private int mWidth;
     private int mHeight;
 
+    public static float map(float val,float a1,float a2, float b1, float b2) {
+        return b1 + (val - a1) * (b2 - b1) / (a2 - a1);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,28 +39,27 @@ public class Julia extends Activity {
         mWidth = size.x;
         mHeight = size.y;
 
-        Bitmap.Config conf = Bitmap.Config.ARGB_8888;
+        Bitmap.Config conf = Bitmap.Config.ARGB_4444;
         mBitmap = Bitmap.createBitmap(mWidth, mHeight, conf);
 
         mDisplayView = (ImageView) findViewById(R.id.display);
         mDisplayView.setImageBitmap(mBitmap);
 
         RenderScript mJuliaScript = RenderScript.create(this);
-        mInPixelsAllocation = Allocation.createFromBitmap(mJuliaScript, mBitmap,Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_SCRIPT);
-        mOutPixelsAllocation = Allocation.createFromBitmap(mJuliaScript, mBitmap,Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_SCRIPT);
+        mInPixelsAllocation = Allocation.createFromBitmap(mJuliaScript, mBitmap, Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_SCRIPT);
+        mOutPixelsAllocation = Allocation.createFromBitmap(mJuliaScript, mBitmap, Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_SCRIPT);
         mJuliaScriptInterface = new ScriptC_julia(mJuliaScript);
 
         mJuliaScriptInterface.set_height(mHeight - 160);
         mJuliaScriptInterface.set_width(mWidth);
 
-        mJuliaScriptInterface.set_precision(30);
+        mJuliaScriptInterface.set_precision(40);
 
         /*
         Ideas for even more crazy sets
         https://en.wikipedia.org/wiki/Julia_set
          */
 
-        //renderJulia(-0.9259259f, 0.30855855f);
         renderJulia(-0.8f, 0.156f);
     }
 
@@ -69,8 +72,8 @@ public class Julia extends Activity {
             case (MotionEvent.ACTION_MOVE):
                 float x = event.getAxisValue(MotionEvent.AXIS_X);
                 float y = event.getAxisValue(MotionEvent.AXIS_Y);
-                float cx = ((x / mWidth) * 4f) - 2f;
-                float cy = ((y / mHeight) * 4f) - 2f;
+                float cx = map(x,0,mWidth,-2,2);
+                float cy = map(y,0,mHeight,-2,2);
                 renderJulia(cx, cy);
                 return true;
 
@@ -80,7 +83,8 @@ public class Julia extends Activity {
     }
 
     private void renderJulia(float cx, float cy) {
-        Log.d("tag","{"+cx+","+cy+"},");
+        Log.d("debug", "(" + cx + "," + cy + ")");
+
         mJuliaScriptInterface.set_cx(cx);
         mJuliaScriptInterface.set_cy(cy);
         mJuliaScriptInterface.forEach_root(mInPixelsAllocation, mOutPixelsAllocation);
